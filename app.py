@@ -1,29 +1,35 @@
 import os
-from datetime import datetime
 from flask import Flask, render_template, send_from_directory, request, jsonify
+from google import genai
 
 app = Flask(__name__)
+
+# Initialize the free Google GenAI client
+# It automatically reads your GEMINI_API_KEY environment variable on Render
+client = genai.Client()
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
-# This endpoint handles the actual live message processing
 @app.route('/chat', methods=['POST'])
 def chat():
     user_data = request.json
-    user_message = user_data.get('message', '').strip().lower()
+    user_message = user_data.get('message', '').strip()
     
-    # Real-time backend processing logic
-    if 'date' in user_message or 'time' in user_message:
-        now = datetime.now()
-        current_date = now.strftime("%A, %B %d, %Y")
-        current_time = now.strftime("%I:%M %p")
-        reply = f"Today's date is {current_date} and the current server time is {current_time}."
-    elif 'hello' in user_message or 'hi' in user_message:
-        reply = "Hello there! Your mobile app backend is fully linked up and communicating perfectly. What should we build into our core tool next?"
-    else:
-        reply = f"I received your message: '{user_data.get('message')}'. The live Python backend pipeline is working cleanly on Render!"
+    if not user_message:
+        return jsonify({"reply": "Please enter a valid prompt."})
+    
+    try:
+        # This sends your message to the AI engine to research and reply instantly
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=user_message,
+        )
+        reply = response.text
+    except Exception as e:
+        # Fallback if your API key is missing or configured incorrectly
+        reply = f"LOYAL AI Engine Connection Error: Make sure your GEMINI_API_KEY is added to your Render environment variables."
 
     return jsonify({"reply": reply})
 
