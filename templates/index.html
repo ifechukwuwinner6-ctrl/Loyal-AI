@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI Mobile App</title>
+    <title>LOYAL AI</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#000000">
     
@@ -24,8 +24,6 @@
             overflow: hidden;
             position: relative;
         }
-        
-        /* Top Control Header Bar */
         header {
             display: flex;
             justify-content: space-between;
@@ -50,8 +48,6 @@
             font-size: 0.85rem;
             font-weight: 600;
         }
-
-        /* Chat History Stream Window */
         main {
             flex: 1;
             overflow-y: auto;
@@ -59,10 +55,8 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            padding-bottom: 80px; /* Safe zone spacing so text is never covered by the bottom bar */
+            padding-bottom: 80px;
         }
-        
-        /* Message Dialogue Bubbles */
         .chat-bubble {
             max-width: 85%;
             padding: 12px 16px;
@@ -82,8 +76,6 @@
             color: #ececf1;
             align-self: flex-start;
         }
-
-        /* Fixed Bottom Input Field Container */
         .input-container {
             position: fixed;
             bottom: 0;
@@ -103,11 +95,7 @@
             gap: 10px;
             width: 100%;
         }
-        .plus-btn {
-            color: #b4b4b4;
-            font-size: 1.4rem;
-            cursor: pointer;
-        }
+        .plus-btn { color: #b4b4b4; font-size: 1.4rem; }
         input[type="text"] {
             flex: 1;
             background: none;
@@ -117,9 +105,7 @@
             font-size: 1rem;
             outline: none;
         }
-        input[type="text"]::placeholder {
-            color: #7d7d7d;
-        }
+        input[type="text"]::placeholder { color: #7d7d7d; }
         .send-btn {
             background-color: #ffffff;
             color: #000000;
@@ -134,12 +120,10 @@
             font-size: 1.1rem;
             cursor: pointer;
         }
-
-        /* Sliding Navigation Sidebar Panel */
         .sidebar {
             position: fixed;
             top: 0;
-            left: -280px; /* Hidden off-screen by default */
+            left: -280px;
             width: 280px;
             height: 100%;
             background-color: #171717;
@@ -150,11 +134,7 @@
             padding: 16px;
             box-shadow: 4px 0 10px rgba(0,0,0,0.5);
         }
-        .sidebar.open {
-            left: 0; /* Slides smoothly into view */
-        }
-        
-        /* Dark Overlay Mask for the Sidebar */
+        .sidebar.open { left: 0; }
         .sidebar-overlay {
             position: fixed;
             top: 0;
@@ -165,11 +145,7 @@
             z-index: 90;
             display: none;
         }
-        .sidebar-overlay.active {
-            display: block;
-        }
-
-        /* Sidebar Internal Layout Content matching image 1780144773338.jpeg */
+        .sidebar-overlay.active { display: block; }
         .search-box {
             width: 100%;
             padding: 10px 14px;
@@ -187,7 +163,6 @@
             text-transform: uppercase;
             font-weight: bold;
             margin-bottom: 12px;
-            letter-spacing: 0.5px;
         }
         .history-list {
             flex: 1;
@@ -203,7 +178,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            padding: 4px 0;
         }
         .new-chat-btn {
             display: flex;
@@ -215,33 +189,23 @@
             background: none;
             border: none;
             cursor: pointer;
-            text-align: left;
         }
     </style>
 </head>
 <body>
 
-    <!-- Dark Overlay Backdrop -->
     <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
 
-    <!-- Sliding History Sidebar -->
     <div class="sidebar" id="sidebarMenu">
         <input type="text" class="search-box" placeholder="🔍 Search for chats">
-        
-        <button class="new-chat-btn" onclick="clearChat()">
-            <span>📝</span> New chat
-        </button>
-
+        <button class="new-chat-btn" onclick="clearChat()"><span>📝</span> New chat</button>
         <div class="menu-heading">Chats</div>
         <div class="history-list">
             <a href="#" class="history-item" onclick="loadMockChat('Build Mobile Apps')">Build Mobile Apps...</a>
             <a href="#" class="history-item" onclick="loadMockChat('Price Scraper Backend')">Price Scraper Back...</a>
-            <a href="#" class="history-item" onclick="loadMockChat('Shopping Apps')">Shopping Apps: A...</a>
-            <a href="#" class="history-item" onclick="loadMockChat('Debugging 404 Error')">Debugging 404 Err...</a>
         </div>
     </div>
 
-    <!-- Main View Panel Layout -->
     <header>
         <div class="menu-icon" onclick="toggleSidebar()">☰</div>
         <button class="badge-btn">✦ Get Plus</button>
@@ -249,42 +213,38 @@
     </header>
 
     <main id="chat-stream">
-        <div class="chat-bubble ai" id="welcome-message">Hello! Ask me about the date or time to test our live Python connection.</div>
+        <div class="chat-bubble ai">Welcome to LOYAL AI. Ask me anything!</div>
     </main>
 
-    <!-- Correctly Structured Bottom Interactive Capsule Panel -->
     <div class="input-container">
         <div class="input-capsule">
             <div class="plus-btn">+</div>
-            <input type="text" id="user-input" placeholder="Ask ChatGPT">
+            <!-- Updated placeholder to Ask LOYAL AI -->
+            <input type="text" id="user-input" placeholder="Ask LOYAL AI">
             <button class="send-btn" onclick="executeChatAction()">↑</button>
         </div>
     </div>
 
     <script>
-        // Sidebar opening and closing toggle panel controller
         function toggleSidebar() {
             document.getElementById('sidebarMenu').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('active');
         }
 
-        // Clears out screen message streams for an initialized fresh slate
         function clearChat() {
-            document.getElementById('chat-stream').innerHTML = '<div class="chat-bubble ai">Started a fresh interaction log. How can I help you?</div>';
+            document.getElementById('chat-stream').innerHTML = '<div class="chat-bubble ai">Started a fresh conversation.</div>';
             toggleSidebar();
         }
 
-        // Populates screen window with dynamic mock items chosen from history archives
         function loadMockChat(title) {
             const streamBox = document.getElementById('chat-stream');
             streamBox.innerHTML = `
                 <div class="chat-bubble user">Open logs for: ${title}</div>
-                <div class="chat-bubble ai">Loaded previous workspace logs for "${title}". Your active production server connection pipeline remains stable.</div>
+                <div class="chat-bubble ai">Loaded previous workspace logs for "${title}".</div>
             `;
             toggleSidebar();
         }
 
-        // Handles pipeline calls to backend Flask data controllers
         async function executeChatAction() {
             const inputField = document.getElementById('user-input');
             const userText = inputField.value.trim();
@@ -292,7 +252,6 @@
             
             const streamBox = document.getElementById('chat-stream');
             
-            // Append User Item Card
             const userBubble = document.createElement('div');
             userBubble.className = 'chat-bubble user';
             userBubble.innerText = userText;
@@ -301,11 +260,10 @@
             inputField.value = '';
             streamBox.scrollTop = streamBox.scrollHeight;
             
-            // Create thinking placeholder element
             const typingBubble = document.createElement('div');
             typingBubble.className = 'chat-bubble ai';
             typingBubble.style.color = '#7d7d7d';
-            typingBubble.innerText = "Thinking...";
+            typingBubble.innerText = "LOYAL AI is thinking...";
             streamBox.appendChild(typingBubble);
             streamBox.scrollTop = streamBox.scrollHeight;
 
@@ -320,7 +278,7 @@
                 typingBubble.style.color = '#ececf1';
                 typingBubble.innerText = data.reply;
             } catch (error) {
-                typingBubble.innerText = "Error contacting server connection link.";
+                typingBubble.innerText = "Error contacting LOYAL AI engine.";
             }
             streamBox.scrollTop = streamBox.scrollHeight;
         }
@@ -328,10 +286,6 @@
         document.getElementById('user-input').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') executeChatAction();
         });
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('data:text/javascript,console.log("Service Worker Registered");');
-        }
     </script>
 </body>
 </html>
