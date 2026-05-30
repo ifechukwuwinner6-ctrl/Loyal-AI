@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mobile App Hub</title>
     <link rel="manifest" href="/manifest.json">
-    <!-- Blue accent theme color for mobile browsers -->
     <meta name="theme-color" content="#1e40af">
     
     <style>
@@ -18,7 +17,6 @@
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            /* Premium deep black/dark-gray background */
             background-color: #0b0f19; 
             color: #f3f4f6;
             display: flex;
@@ -26,7 +24,6 @@
             height: 100vh;
             overflow: hidden;
         }
-        /* Electric Blue App Header */
         header {
             background-color: #1e40af;
             color: white;
@@ -36,13 +33,21 @@
             font-size: 1.2rem;
             box-shadow: 0 4px 12px rgba(30, 64, 175, 0.3);
         }
-        /* Main Container */
         main {
             flex: 1;
             overflow-y: auto;
             padding: 20px;
+            position: relative;
         }
-        /* Sleek Dark Cards */
+        
+        /* Screen management styles */
+        .app-screen {
+            display: none; /* Hides screens by default */
+        }
+        .app-screen.active {
+            display: block; /* Only shows the active screen */
+        }
+
         .card {
             background: #111827;
             border: 1px solid #1e293b;
@@ -51,18 +56,22 @@
             margin-bottom: 16px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
-        h2 { 
-            font-size: 1.1rem; 
-            margin-bottom: 8px; 
-            color: #3b82f6; /* Brilliant Blue Titles */
-        }
-        p { 
-            font-size: 0.9rem; 
-            color: #9ca3af; /* Soft gray for easy reading on dark backgrounds */
-            line-height: 1.4; 
+        h2 { font-size: 1.1rem; margin-bottom: 8px; color: #3b82f6; }
+        p { font-size: 0.9rem; color: #9ca3af; line-height: 1.4; }
+        
+        /* Input Box Form Elements */
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            background: #1f2937;
+            border: 1px solid #3b82f6;
+            border-radius: 8px;
+            color: white;
+            margin-top: 10px;
+            font-size: 1rem;
+            outline: none;
         }
         
-        /* Vibrant Blue Action Button */
         .btn {
             display: block;
             width: 100%;
@@ -77,13 +86,9 @@
             cursor: pointer;
             text-align: center;
             box-shadow: 0 4px 10px rgba(37, 99, 235, 0.4);
-            transition: background 0.2s;
         }
-        .btn:active { 
-            background-color: #1d4ed8; 
-        }
+        .btn:active { background-color: #1d4ed8; }
 
-        /* Dark Bottom Navigation Bar */
         nav {
             background: #0f172a;
             border-top: 1px solid #1e293b;
@@ -96,37 +101,89 @@
             font-size: 0.75rem;
             color: #64748b;
             text-decoration: none;
+            background: none;
+            border: none;
+            width: 33%;
+            cursor: pointer;
         }
-        .nav-item.active { 
-            color: #3b82f6; 
-            font-weight: bold; 
-        }
+        .nav-item.active { color: #3b82f6; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header>My Mobile AI App</header>
+    <header id="app-title">Home Dashboard</header>
 
     <main>
-        <div class="card">
-            <h2>Welcome to your App Dashboard</h2>
-            <p>Your new black and blue dark layout is ready. It's fully optimized for quick mobile navigation and reduces eye strain.</p>
+        <!-- SCREEN 1: HOME -->
+        <div id="screen-home" class="app-screen active">
+            <div class="card">
+                <h2>Welcome to your App Dashboard</h2>
+                <p>Your dark environment is running flawlessly. Click the button below to jump directly into your AI working module.</p>
+                <button class="btn" onclick="switchScreen('data', 'AI Engine')">Go to AI Engine</button>
+            </div>
         </div>
 
-        <div class="card">
-            <h2>AI Assistant Engine</h2>
-            <p>Ready to process queries or display data pipeline feeds here.</p>
-            <button class="btn" onclick="alert('Action triggered!')">Tap Action Button</button>
+        <!-- SCREEN 2: AI ENGINE / DATA -->
+        <div id="screen-data" class="app-screen">
+            <div class="card">
+                <h2>AI Assistant Engine</h2>
+                <p>Type a prompt or text instruction below to interact with your system architecture:</p>
+                
+                <input type="text" id="ai-input" placeholder="Ask something..." user-select="text">
+                
+                <button class="btn" onclick="processAIAction()">Submit Action</button>
+            </div>
+            <div class="card" id="result-card" style="display: none;">
+                <h2 style="color: #10b981;">System Output:</h2>
+                <p id="result-text"></p>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: SETTINGS -->
+        <div id="screen-settings" class="app-screen">
+            <div class="card">
+                <h2>Application Settings</h2>
+                <p>Configure device sync, web scraping parameters, or connection tokens here.</p>
+                <button class="btn" style="background-color: #ef4444;" onclick="alert('System reset placeholder')">Reset App Cache</button>
+            </div>
         </div>
     </main>
 
     <nav>
-        <a href="#" class="nav-item active"><div>🏠</div>Home</a>
-        <a href="#" class="nav-item"><div>📊</div>Data</a>
-        <a href="#" class="nav-item"><div>⚙️</div>Settings</a>
+        <button class="nav-item active" id="btn-home" onclick="switchScreen('home', 'Home Dashboard')"><div>🏠</div>Home</button>
+        <button class="nav-item" id="btn-data" onclick="switchScreen('data', 'AI Engine')"><div>📊</div>AI Engine</button>
+        <button class="nav-item" id="btn-settings" onclick="switchScreen('settings', 'Settings')"><div>⚙️</div>Settings</button>
     </nav>
 
     <script>
+        // Smoothly toggles display blocks between mock application windows
+        function switchScreen(screenName, titleText) {
+            // Hide all views
+            document.querySelectorAll('.app-screen').forEach(screen => screen.classList.remove('active'));
+            // Remove highlighting from nav links
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            
+            // Show the one requested
+            document.getElementById('screen-' + screenName).classList.add('active');
+            document.getElementById('btn-' + screenName).classList.add('active');
+            
+            // Update Top Bar text
+            document.getElementById('app-title').innerText = titleText;
+        }
+
+        // Simulates an internal system action when submitting text data
+        function processAIAction() {
+            const inputVal = document.getElementById('ai-input').value;
+            if(!inputVal.trim()) {
+                alert("Please type something in the input bar first!");
+                return;
+            }
+            
+            // Displays a simulated process loading response dynamically onto the interface
+            document.getElementById('result-card').style.display = 'block';
+            document.getElementById('result-text').innerText = "Processing request for: \"" + inputVal + "\"... (Engine pipeline ready)";
+        }
+
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('data:text/javascript,console.log("Service Worker Registered");');
         }
