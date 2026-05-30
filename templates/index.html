@@ -55,7 +55,7 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            padding-bottom: 110px; /* Space for input box and preview */
+            padding-bottom: 110px;
         }
         .chat-bubble {
             max-width: 85%;
@@ -77,8 +77,8 @@
             align-self: flex-start;
         }
         .chat-image {
-            max-width: 200px;
-            max-height: 200px;
+            max-width: 100%;
+            max-height: 250px;
             border-radius: 12px;
             margin-bottom: 8px;
             display: block;
@@ -105,12 +105,7 @@
             gap: 10px;
             width: 100%;
         }
-        .plus-btn { 
-            color: #b4b4b4; 
-            font-size: 1.4rem; 
-            cursor: pointer;
-            user-select: none;
-        }
+        .plus-btn { color: #b4b4b4; font-size: 1.4rem; cursor: pointer; }
         input[type="text"] {
             flex: 1;
             background: none;
@@ -135,7 +130,6 @@
             font-size: 1.1rem;
             cursor: pointer;
         }
-        /* Image Preview Box style */
         .preview-box {
             display: none;
             align-items: center;
@@ -144,28 +138,12 @@
             padding: 6px 12px;
             border-radius: 12px;
             align-self: flex-start;
-            max-width: 90%;
         }
-        .preview-img {
-            width: 35px;
-            height: 35px;
-            border-radius: 6px;
-            object-fit: cover;
-        }
-        .preview-text {
-            font-size: 0.85rem;
-            color: #b4b4b4;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 180px;
-        }
-        .remove-preview {
-            color: #ff4a4a;
-            font-weight: bold;
-            cursor: pointer;
-            padding: 0 4px;
-        }
+        .preview-img { width: 35px; height: 35px; border-radius: 6px; object-fit: cover; }
+        .preview-text { font-size: 0.85rem; color: #b4b4b4; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
+        .remove-preview { color: #ff4a4a; font-weight: bold; cursor: pointer; }
+        
+        /* Sidebar layout styling */
         .sidebar {
             position: fixed;
             top: 0;
@@ -178,7 +156,6 @@
             display: flex;
             flex-direction: column;
             padding: 16px;
-            box-shadow: 4px 0 10px rgba(0,0,0,0.5);
         }
         .sidebar.open { left: 0; }
         .sidebar-overlay {
@@ -203,39 +180,10 @@
             outline: none;
             margin-bottom: 24px;
         }
-        .menu-heading {
-            font-size: 0.8rem;
-            color: #666;
-            text-transform: uppercase;
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-        .history-list {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .history-item {
-            color: #ececf1;
-            font-size: 0.95rem;
-            text-decoration: none;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .new-chat-btn {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: white;
-            font-size: 1rem;
-            margin-bottom: 24px;
-            background: none;
-            border: none;
-            cursor: pointer;
-        }
+        .menu-heading { font-size: 0.8rem; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 12px; }
+        .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+        .history-item { color: #ececf1; font-size: 0.95rem; text-decoration: none; cursor: pointer; }
+        .new-chat-btn { display: flex; align-items: center; gap: 10px; color: white; font-size: 1rem; margin-bottom: 24px; background: none; border: none; }
     </style>
 </head>
 <body>
@@ -245,10 +193,9 @@
     <div class="sidebar" id="sidebarMenu">
         <input type="text" class="search-box" placeholder="🔍 Search for chats">
         <button class="new-chat-btn" onclick="clearChat()"><span>📝</span> New chat</button>
-        <div class="menu-heading">Chats</div>
-        <div class="history-list">
-            <a href="#" class="history-item" onclick="loadMockChat('Build Mobile Apps')">Build Mobile Apps...</a>
-            <a href="#" class="history-item" onclick="loadMockChat('Price Scraper Backend')">Price Scraper Back...</a>
+        <div class="menu-heading">Recent Conversations</div>
+        <div class="history-list" id="sidebar-history-container">
+            <div class="history-item" onclick="loadMockChat('Welcome Log')">Welcome Log</div>
         </div>
     </div>
 
@@ -259,7 +206,7 @@
     </header>
 
     <main id="chat-stream">
-        <div class="chat-bubble ai">Welcome to LOYAL AI. Ask me anything!</div>
+        <div class="chat-bubble ai">Welcome to LOYAL AI. Upload a picture and tell me to "change background to a beach" or ask any question!</div>
     </main>
 
     <div class="input-container">
@@ -292,29 +239,16 @@
             toggleSidebar();
         }
 
-        function loadMockChat(title) {
-            const streamBox = document.getElementById('chat-stream');
-            streamBox.innerHTML = `
-                <div class="chat-bubble user">Open logs for: ${title}</div>
-                <div class="chat-bubble ai">Loaded previous workspace logs for "${title}".</div>
-            `;
-            toggleSidebar();
-        }
-
         function handleFileSelect() {
             const fileInput = document.getElementById('file-input');
             const file = fileInput.files[0];
-            
             if (file) {
                 selectedFileMime = file.type;
                 document.getElementById('p-text').innerText = file.name;
-                
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     selectedFileBase64 = e.target.result.split(',')[1];
                     previewSrcUrl = e.target.result;
-                    
-                    // Show preview component UI
                     document.getElementById('p-img').src = previewSrcUrl;
                     document.getElementById('p-box').style.display = 'flex';
                 };
@@ -337,40 +271,43 @@
             
             if (!userText && !selectedFileBase64) return;
             
+            // Add conversation title to sidebar dynamically!
+            if (userText) {
+                const historyContainer = document.getElementById('sidebar-history-container');
+                const newItem = document.createElement('div');
+                newItem.className = 'history-item';
+                newItem.innerText = userText.substring(0, 20) + (userText.length > 20 ? '...' : '');
+                historyContainer.insertBefore(newItem, historyContainer.firstChild);
+            }
+
             const userBubble = document.createElement('div');
             userBubble.className = 'chat-bubble user';
             
-            // If user attached a photo, render the image inside the user chat bubble
             if (previewSrcUrl) {
                 const imgElement = document.createElement('img');
                 imgElement.src = previewSrcUrl;
                 imgElement.className = 'chat-image';
                 userBubble.appendChild(imgElement);
             }
-            
             if (userText) {
                 const textSpan = document.createElement('div');
                 textSpan.innerText = userText;
                 userBubble.appendChild(textSpan);
             }
-            
             streamBox.appendChild(userBubble);
             
-            // Temporary capture variables before resetting UI
-            const activeMsg = userText || "Analyze this image";
+            const activeMsg = userText || "Process image";
             const activeImg = selectedFileBase64;
             const activeMime = selectedFileMime;
             
-            // Reset input panel cleanly
             inputField.value = '';
             clearSelectedFile();
             streamBox.scrollTop = streamBox.scrollHeight;
             
-            // AI Thinking block
             const typingBubble = document.createElement('div');
             typingBubble.className = 'chat-bubble ai';
             typingBubble.style.color = '#7d7d7d';
-            typingBubble.innerText = "LOYAL AI is thinking...";
+            typingBubble.innerText = "LOYAL AI is processing...";
             streamBox.appendChild(typingBubble);
             streamBox.scrollTop = streamBox.scrollHeight;
 
@@ -378,16 +315,18 @@
                 const response = await fetch('/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        message: activeMsg, 
-                        image_data: activeImg,
-                        image_mime: activeMime
-                    })
+                    body: JSON.stringify({ message: activeMsg, image_data: activeImg, image_mime: activeMime })
                 });
                 const data = await response.json();
                 
                 typingBubble.style.color = '#ececf1';
-                typingBubble.innerText = data.reply;
+                
+                // If backend sent back an image payload, render it as an actual picture file
+                if (data.type === 'image') {
+                    typingBubble.innerHTML = `<div>${data.reply}</div><img src="data:image/jpeg;base64,${data.image_data}" class="chat-image" style="margin-top:10px;">`;
+                } else {
+                    typingBubble.innerText = data.reply;
+                }
             } catch (error) {
                 typingBubble.innerText = "Error contacting LOYAL AI engine.";
             }
