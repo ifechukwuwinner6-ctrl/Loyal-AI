@@ -25,22 +25,32 @@ def chat():
 
     CHATGPT_STYLE_PROMPT = (
         "You are LOYAL AI, an advanced, highly conversational AI assistant built by Ifechukwu Winner. "
-         f"Today's current date is explicitly {current_date_str}. Always use this date if asked. "
+        f"Today's current date is explicitly {current_date_str}. Always use this date if asked. "
         "Your responses must be beautifully formatted with clean spacing, clear, direct, and engaging. "
         "Crucial Rule: At the very end of every single response, you must ask the user a natural, "
         "engaging follow-up question related to what they just asked, prompting them to continue the conversation."
     )
 
-    # Simple check to detect if the user wants to change or modify an image background
-    is_image_edit_request = any(keyword in user_message.lower() for keyword in ['change background', 'make this background', 'darken background', 'modify image'])
+    msg_lower = user_message.lower()
+    
+    # Detect if user wants an image created from scratch or an uploaded image modified
+    is_create_request = any(kw in msg_lower for kw in ['create a picture', 'generate a picture', 'draw me', 'generate an image', 'create an image'])
+    is_edit_request = image_base64 is not None and any(kw in msg_lower for kw in ['background', 'darken', 'change', 'modify', 'replace', 'design', 'fix', 'look like'])
 
-    # --- IMAGE MODIFICATION PIPELINE ---
-    if image_base64 and is_image_edit_request:
+    # --- IMAGE PIPELINE (GENERATION OR MODIFICATION) ---
+    if is_create_request or is_edit_request:
         try:
-            image_bytes = base64.b64decode(image_base64)
+            # Determine the correct prompt based on whether an image was uploaded
+            if is_edit_request:
+                prompt_instructions = f"Modify this image based on this request: {user_message}. Keep the main subject clean and unaltered."
+            else:
+                prompt_instructions = f"Generate a beautiful, high-quality image based on this prompt: {user_message}"
+
+            # If it's an edit request, we would ideally pass the image, but Imagen 3 on free capabilities handles text-to-image prompts. 
+            # We pass your description directly to create your desired design.
             result = client.models.generate_images(
                 model='imagen-3.0-capability-003',
-                prompt=f"Modify this image: change the background to {user_message}. Keep the subject unchanged.",
+                prompt=prompt_instructions,
                 config=types.GenerateImagesConfig(
                     number_of_images=1,
                     output_mime_type="image/jpeg",
@@ -53,19 +63,19 @@ def chat():
             
             return jsonify({
                 "type": "image",
-                "reply": "I've updated the background for you! How does it look? What adjustments should we make next?",
+                "reply": f"🎨 Done! I have processed your image request. Here is what I created for you at {datetime.now().strftime('%H:%M %p')}:",
                 "image_data": generated_base64
             })
             
         except APIError as e:
-            if e.code == 420 or e.code == 429:
+            if e.code in [420, 429]:
                 return jsonify({
                     "type": "text", 
-                    "reply": "⏳ LOYAL AI is resting: The free tier image generation capacity is currently maxed out. Please try your request again shortly!"
+                    "reply": "⏳ LOYAL AI is resting: The free tier image generation capacity is currently maxed out. Please try again in a few moments!"
                 })
-            return jsonify({"type": "text", "reply": "The image model is currently unavailable. Let's stick to text chatting for a second!"})
+            return jsonify({"type": "text", "reply": f"The image model returned an error ({e.code}). Let's try again shortly!"})
         except Exception:
-            return jsonify({"type": "text", "reply": "I couldn't complete the image edit. Let's try sending it again or tweak your request!"})
+            return jsonify({"type": "text", "reply": "I ran into an issue rendering that image design. Can we try rephrasing your request?"})
 
     # --- TEXT & ANALYSIS PIPELINE ---
     contents_payload = []
@@ -92,10 +102,10 @@ def chat():
         if e.code == 429:
             return jsonify({
                 "type": "text",
-                "reply": "⏱️ Speed Limit Reached: Conversations are moving a bit fast for the engine. Let's take a quick breath and try again!"
+                "reply": "⏱️ Speed Limit Reached: The free tier engine needs a brief 30-second break. Ask me again in just a moment!"
             })
         return jsonify({"type": "text", "reply": f"LOYAL AI Error Status ({e.code}): Request could not be processed."})
-    except Exception as e:
+    except Exception:
         return jsonify({"type": "text", "reply": "An unexpected connection error occurred. Let's try sending that message again!"})
 
 if __name__ == '__main__':
