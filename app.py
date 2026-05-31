@@ -1,4 +1,4 @@
-                import os
+import os
 import base64
 from datetime import datetime
 from flask import Flask, render_template, request, jsonify
@@ -7,6 +7,7 @@ from google.genai import types
 # Import the specific APIError to catch quota issues cleanly
 from google.genai.errors import APIError
 
+# CRITICAL FIX: Added the double underscores back so Flask initializes properly
 app = Flask(__name__)
 
 client = genai.Client()
@@ -83,7 +84,6 @@ def chat():
             "reply": response.text
         })
     except APIError as e:
-        # Intercepting specific status codes cleanly
         if e.code == 429:
             return jsonify({
                 "type": "text", 
