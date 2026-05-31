@@ -8,6 +8,7 @@ from google.genai.errors import APIError
 
 app = Flask(__name__)
 
+# Initialize the Google GenAI client
 client = genai.Client()
 
 @app.route('/')
@@ -21,8 +22,11 @@ def chat():
     image_base64 = user_data.get('image_data')
     image_mime = user_data.get('image_mime', 'image/jpeg')
 
+    # Dynamic time and date handling
+    current_time_str = datetime.now().strftime("%I:%M %p")
     current_date_str = datetime.now().strftime("%B %d, %Y")
 
+    # The Core Identity & Brain System Instructions
     CHATGPT_STYLE_PROMPT = (
         "You are LOYAL AI, an advanced, highly conversational AI assistant built by Ifechukwu Winner. "
         f"Today's current date is explicitly {current_date_str}. Always use this date if asked. "
@@ -33,23 +37,34 @@ def chat():
 
     msg_lower = user_message.lower()
     
-    # Detect if user wants an image created from scratch or an uploaded image modified
-    is_create_request = any(kw in msg_lower for kw in ['create a picture', 'generate a picture', 'draw me', 'generate an image', 'create an image'])
-    is_edit_request = image_base64 is not None and any(kw in msg_lower for kw in ['background', 'darken', 'change', 'modify', 'replace', 'design', 'fix', 'look like'])
+    # --- SMART INTENT DETECTION ---
+    # Smart check for brand new image creation requests
+    is_create_request = any(phrase in msg_lower for phrase in [
+        'create a picture', 'generate a picture', 'draw me', 'generate an image', 
+        'create an image', 'make a picture', 'draw a picture', 'generate a photo'
+    ])
+    
+    # Smart check for uploaded image modification requests
+    is_edit_request = image_base64 is not None and any(word in msg_lower for word in [
+        'background', 'darken', 'change', 'modify', 'replace', 'design', 'fix', 
+        'look like', 'edit', 'add', 'remove', 'make the', 'turn this'
+    ])
 
-    # --- IMAGE PIPELINE (GENERATION OR MODIFICATION) ---
+    # --- ULTRASMART IMAGE GENERATION PIPELINE ---
     if is_create_request or is_edit_request:
         try:
-            # Determine the correct prompt based on whether an image was uploaded
+            # Crafting context-aware prompts depending on whether an image was sent
             if is_edit_request:
-                prompt_instructions = f"Modify this image based on this request: {user_message}. Keep the main subject clean and unaltered."
+                prompt_instructions = (
+                    f"Modify the provided image concept based on this user instruction: '{user_message}'. "
+                    "Ensure the visual theme matches perfectly while maintaining the primary context elements."
+                )
             else:
-                prompt_instructions = f"Generate a beautiful, high-quality image based on this prompt: {user_message}"
+                prompt_instructions = f"A professional, high-quality rendering of: {user_message}. Clean composition, crisp details."
 
-            # If it's an edit request, we would ideally pass the image, but Imagen 3 on free capabilities handles text-to-image prompts. 
-            # We pass your description directly to create your desired design.
+            # Crucial Fix: Swapped out 'imagen-3.0-capability-003' (404) with production 'imagen-3.0-generate-002'
             result = client.models.generate_images(
-                model='imagen-3.0-capability-003',
+                model='imagen-3.0-generate-002',
                 prompt=prompt_instructions,
                 config=types.GenerateImagesConfig(
                     number_of_images=1,
@@ -58,34 +73,46 @@ def chat():
                 )
             )
             
+            # Extract the raw binary image data and convert it back to Base64 safely
             generated_image_bytes = result.generated_images[0].image.image_bytes
             generated_base64 = base64.b64encode(generated_image_bytes).decode('utf-8')
             
             return jsonify({
                 "type": "image",
-                "reply": f"🎨 Done! I have processed your image request. Here is what I created for you at {datetime.now().strftime('%H:%M %p')}:",
+                "reply": f"🎨 Processed successfully at {current_time_str}! Here is your custom generation:",
                 "image_data": generated_base64
             })
             
         except APIError as e:
+            # Smart handler for free tier rate limits (Status Code 429/420)
             if e.code in [420, 429]:
                 return jsonify({
                     "type": "text", 
-                    "reply": "⏳ LOYAL AI is resting: The free tier image generation capacity is currently maxed out. Please try again in a few moments!"
+                    "reply": "⏳ LOYAL AI is resting: The free tier image generation capacity is temporarily maxed out. Let's give it 60 seconds and try again!"
                 })
-            return jsonify({"type": "text", "reply": f"The image model returned an error ({e.code}). Let's try again shortly!"})
-        except Exception:
-            return jsonify({"type": "text", "reply": "I ran into an issue rendering that image design. Can we try rephrasing your request?"})
+            return jsonify({
+                "type": "text", 
+                "reply": f"🔧 API Model Error Link ({e.code}). Let's verify our credentials or try another query!"
+            })
+        except Exception as ex:
+            return jsonify({
+                "type": "text", 
+                "reply": "I ran into a structural canvas issue compiling the pixels. Could you describe your image request differently?"
+            })
 
-    # --- TEXT & ANALYSIS PIPELINE ---
+    # --- TEXT CONVERSATION & COMPUTER VISION PIPELINE ---
     contents_payload = []
+    
+    # If a picture is attached but the user is ASKING about it instead of trying to EDIT it
     if image_base64:
         image_bytes = base64.b64decode(image_base64)
         contents_payload.append(types.Part.from_bytes(data=image_bytes, mime_type=image_mime))
     
-    contents_payload.append(user_message if user_message else "Analyze this image.")
+    # Fallback to standard request text if input bar is sent empty with a picture
+    contents_payload.append(user_message if user_message else "Analyze the details of this image comprehensively.")
 
     try:
+        # Utilizing ultra-fast multimodal Flash engine for chat and image interpretation
         response = client.models.generate_content(
             model='gemini-2.5-flash',
             contents=contents_payload,
@@ -102,11 +129,12 @@ def chat():
         if e.code == 429:
             return jsonify({
                 "type": "text",
-                "reply": "⏱️ Speed Limit Reached: The free tier engine needs a brief 30-second break. Ask me again in just a moment!"
+                "reply": "⏱️ Speed Limit: Chat data requests are moving a bit too fast for the free server. Give me just a few seconds to breathe!"
             })
-        return jsonify({"type": "text", "reply": f"LOYAL AI Error Status ({e.code}): Request could not be processed."})
+        return jsonify({"type": "text", "reply": f"LOYAL AI Routing Error ({e.code}): Request could not be resolved."})
     except Exception:
-        return jsonify({"type": "text", "reply": "An unexpected connection error occurred. Let's try sending that message again!"})
+        return jsonify({"type": "text", "reply": "An unexpected server pipeline disconnect occurred. Let's send that message again!"})
 
 if __name__ == '__main__':
+    # Binds to the required dynamic port environment variable provided by Render
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
