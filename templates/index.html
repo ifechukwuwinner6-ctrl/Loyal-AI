@@ -81,7 +81,7 @@
             max-width: 100%;
             max-height: 250px;
             border-radius: 12px;
-            margin-bottom: 8px;
+            margin-top: 8px;
             display: block;
         }
         .input-container {
@@ -194,8 +194,7 @@
         <input type="text" class="search-box" placeholder="🔍 Search for chats">
         <button class="new-chat-btn" onclick="clearChat()"><span>📝</span> New chat</button>
         <div class="menu-heading">Recent Conversations</div>
-        <div class="history-list" id="sidebar-history-container">
-            </div>
+        <div class="history-list" id="sidebar-history-container"></div>
     </div>
 
     <header>
@@ -204,8 +203,7 @@
         <div class="menu-icon" style="font-size: 1.2rem;">👤</div>
     </header>
 
-    <main id="chat-stream">
-        </main>
+    <main id="chat-stream"></main>
 
     <div class="input-container">
         <div class="preview-box" id="p-box">
@@ -227,7 +225,6 @@
         let selectedFileMime = null;
         let previewSrcUrl = null;
 
-        // Permanent LocalStorage loading configuration logic
         window.onload = function() {
             loadSavedChatHistoryLog();
             loadActiveConversationBubbles();
@@ -268,7 +265,6 @@
             setTimeout(() => { streamBox.scrollTop = streamBox.scrollHeight; }, 50);
         }
 
-        // PERMANENT STORAGE FIX: Saves bubbles array safely to phone memory
         function saveCurrentChatBubblesState() {
             const streamBox = document.getElementById('chat-stream');
             localStorage.setItem('loyal_ai_bubbles_html', streamBox.innerHTML);
@@ -289,7 +285,7 @@
             let historyList = JSON.parse(localStorage.getItem('loyal_ai_sidebar_titles')) || [];
             if (!historyList.includes(titleText)) {
                 historyList.unshift(titleText);
-                if (historyList.length > 8) historyList.pop(); // keep top 8 entries
+                if (historyList.length > 8) historyList.pop();
                 localStorage.setItem('loyal_ai_sidebar_titles', JSON.stringify(historyList));
                 loadSavedChatHistoryLog();
             }
@@ -299,20 +295,15 @@
             const historyContainer = document.getElementById('sidebar-history-container');
             const historyList = JSON.parse(localStorage.getItem('loyal_ai_sidebar_titles')) || [];
             historyContainer.innerHTML = '';
-            
             if (historyList.length === 0) {
                 historyContainer.innerHTML = '<div class="history-item" style="color:#555;cursor:default;">No recent chats</div>';
                 return;
             }
-            
             historyList.forEach(title => {
                 const item = document.createElement('div');
                 item.className = 'history-item';
                 item.innerText = title;
-                // Clicking a topic loads it up instantly
-                item.onclick = function() {
-                    toggleSidebar();
-                };
+                item.onclick = function() { toggleSidebar(); };
                 historyContainer.appendChild(item);
             });
         }
@@ -332,7 +323,6 @@
             if (!userText && !selectedFileBase64) return;
             
             if (userText) {
-                // Shorten text title for sidebar navigation component
                 const displayTitle = userText.substring(0, 24) + (userText.length > 24 ? '...' : '');
                 saveChatTitleToSidebarList(displayTitle);
             }
@@ -379,8 +369,9 @@
                 
                 typingBubble.style.color = '#ececf1';
                 
+                // CRITICAL VISUAL FIX: If server sends back an image, create text and an image element inside the chat bubble
                 if (data.type === 'image') {
-                    typingBubble.innerHTML = `<div>${data.reply}</div><img src="data:image/jpeg;base64,${data.image_data}" class="chat-image" style="margin-top:10px;">`;
+                    typingBubble.innerHTML = `<div>${data.reply}</div><img src="data:image/jpeg;base64,${data.image_data}" class="chat-image">`;
                 } else {
                     typingBubble.innerText = data.reply;
                 }
@@ -388,7 +379,6 @@
                 typingBubble.innerText = "Error establishing secure connection link.";
             }
             
-            // Lock responses securely into local memory state
             saveCurrentChatBubblesState();
             scrollToBottom();
         }
