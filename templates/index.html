@@ -22,7 +22,6 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            position: relative;
         }
         header {
             display: flex;
@@ -54,16 +53,19 @@
             padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            padding-bottom: 110px;
+            gap: 20px;
+            /* CRITICAL FIX: Generous bottom padding ensures text is never hidden behind the input box */
+            padding-bottom: 180px; 
+            scroll-behavior: smooth;
         }
         .chat-bubble {
             max-width: 85%;
             padding: 12px 16px;
             border-radius: 18px;
             font-size: 0.95rem;
-            line-height: 1.4;
+            line-height: 1.5;
             word-wrap: break-word;
+            white-space: pre-wrap; /* Keeps line breaks from AI responses looking clean */
         }
         .chat-bubble.user {
             background-color: #2f2f2f;
@@ -88,7 +90,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            padding: 12px 16px 20px 16px;
+            padding: 12px 16px 24px 16px;
             background-color: #000000;
             border-top: 1px solid #1a1a1a;
             z-index: 10;
@@ -195,7 +197,7 @@
         <button class="new-chat-btn" onclick="clearChat()"><span>📝</span> New chat</button>
         <div class="menu-heading">Recent Conversations</div>
         <div class="history-list" id="sidebar-history-container">
-            <div class="history-item" onclick="loadMockChat('Welcome Log')">Welcome Log</div>
+            <div class="history-item" onclick="clearChat()">Welcome Log</div>
         </div>
     </div>
 
@@ -206,7 +208,7 @@
     </header>
 
     <main id="chat-stream">
-        <div class="chat-bubble ai">Welcome to LOYAL AI. Upload a picture and tell me to "change background to a beach" or ask any question!</div>
+        <div class="chat-bubble ai">Welcome to LOYAL AI. How can I help you today?</div>
     </main>
 
     <div class="input-container">
@@ -264,6 +266,13 @@
             document.getElementById('p-box').style.display = 'none';
         }
 
+        function scrollToBottom() {
+            const streamBox = document.getElementById('chat-stream');
+            setTimeout(() => {
+                streamBox.scrollTop = streamBox.scrollHeight;
+            }, 50);
+        }
+
         async function executeChatAction() {
             const inputField = document.getElementById('user-input');
             const userText = inputField.value.trim();
@@ -271,7 +280,6 @@
             
             if (!userText && !selectedFileBase64) return;
             
-            // Add conversation title to sidebar dynamically!
             if (userText) {
                 const historyContainer = document.getElementById('sidebar-history-container');
                 const newItem = document.createElement('div');
@@ -302,14 +310,14 @@
             
             inputField.value = '';
             clearSelectedFile();
-            streamBox.scrollTop = streamBox.scrollHeight;
+            scrollToBottom();
             
             const typingBubble = document.createElement('div');
             typingBubble.className = 'chat-bubble ai';
             typingBubble.style.color = '#7d7d7d';
-            typingBubble.innerText = "LOYAL AI is processing...";
+            typingBubble.innerText = "LOYAL AI is typing...";
             streamBox.appendChild(typingBubble);
-            streamBox.scrollTop = streamBox.scrollHeight;
+            scrollToBottom();
 
             try {
                 const response = await fetch('/chat', {
@@ -321,7 +329,6 @@
                 
                 typingBubble.style.color = '#ececf1';
                 
-                // If backend sent back an image payload, render it as an actual picture file
                 if (data.type === 'image') {
                     typingBubble.innerHTML = `<div>${data.reply}</div><img src="data:image/jpeg;base64,${data.image_data}" class="chat-image" style="margin-top:10px;">`;
                 } else {
@@ -330,7 +337,7 @@
             } catch (error) {
                 typingBubble.innerText = "Error contacting LOYAL AI engine.";
             }
-            streamBox.scrollTop = streamBox.scrollHeight;
+            scrollToBottom();
         }
 
         document.getElementById('user-input').addEventListener('keypress', function (e) {
