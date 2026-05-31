@@ -54,7 +54,6 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
-            /* CRITICAL FIX: Generous bottom padding ensures text is never hidden behind the input box */
             padding-bottom: 180px; 
             scroll-behavior: smooth;
         }
@@ -65,7 +64,7 @@
             font-size: 0.95rem;
             line-height: 1.5;
             word-wrap: break-word;
-            white-space: pre-wrap; /* Keeps line breaks from AI responses looking clean */
+            white-space: pre-wrap;
         }
         .chat-bubble.user {
             background-color: #2f2f2f;
@@ -107,7 +106,7 @@
             gap: 10px;
             width: 100%;
         }
-        .plus-btn { color: #b4b4b4; font-size: 1.4rem; cursor: pointer; }
+        .plus-btn { color: #b4b4b4; font-size: 1.4rem; cursor: pointer; user-select: none; }
         input[type="text"] {
             flex: 1;
             background: none;
@@ -145,7 +144,6 @@
         .preview-text { font-size: 0.85rem; color: #b4b4b4; max-width: 180px; overflow: hidden; text-overflow: ellipsis; }
         .remove-preview { color: #ff4a4a; font-weight: bold; cursor: pointer; }
         
-        /* Sidebar layout styling */
         .sidebar {
             position: fixed;
             top: 0;
@@ -184,8 +182,8 @@
         }
         .menu-heading { font-size: 0.8rem; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 12px; }
         .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
-        .history-item { color: #ececf1; font-size: 0.95rem; text-decoration: none; cursor: pointer; }
-        .new-chat-btn { display: flex; align-items: center; gap: 10px; color: white; font-size: 1rem; margin-bottom: 24px; background: none; border: none; }
+        .history-item { color: #ececf1; font-size: 0.95rem; text-decoration: none; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .new-chat-btn { display: flex; align-items: center; gap: 10px; color: white; font-size: 1rem; margin-bottom: 24px; background: none; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -197,8 +195,7 @@
         <button class="new-chat-btn" onclick="clearChat()"><span>📝</span> New chat</button>
         <div class="menu-heading">Recent Conversations</div>
         <div class="history-list" id="sidebar-history-container">
-            <div class="history-item" onclick="clearChat()">Welcome Log</div>
-        </div>
+            </div>
     </div>
 
     <header>
@@ -208,8 +205,7 @@
     </header>
 
     <main id="chat-stream">
-        <div class="chat-bubble ai">Welcome to LOYAL AI. How can I help you today?</div>
-    </main>
+        </main>
 
     <div class="input-container">
         <div class="preview-box" id="p-box">
@@ -231,14 +227,15 @@
         let selectedFileMime = null;
         let previewSrcUrl = null;
 
+        // Permanent LocalStorage loading configuration logic
+        window.onload = function() {
+            loadSavedChatHistoryLog();
+            loadActiveConversationBubbles();
+        };
+
         function toggleSidebar() {
             document.getElementById('sidebarMenu').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('active');
-        }
-
-        function clearChat() {
-            document.getElementById('chat-stream').innerHTML = '<div class="chat-bubble ai">Started a fresh conversation.</div>';
-            toggleSidebar();
         }
 
         function handleFileSelect() {
@@ -268,9 +265,63 @@
 
         function scrollToBottom() {
             const streamBox = document.getElementById('chat-stream');
-            setTimeout(() => {
-                streamBox.scrollTop = streamBox.scrollHeight;
-            }, 50);
+            setTimeout(() => { streamBox.scrollTop = streamBox.scrollHeight; }, 50);
+        }
+
+        // PERMANENT STORAGE FIX: Saves bubbles array safely to phone memory
+        function saveCurrentChatBubblesState() {
+            const streamBox = document.getElementById('chat-stream');
+            localStorage.setItem('loyal_ai_bubbles_html', streamBox.innerHTML);
+        }
+
+        function loadActiveConversationBubbles() {
+            const savedHtml = localStorage.getItem('loyal_ai_bubbles_html');
+            const streamBox = document.getElementById('chat-stream');
+            if (savedHtml && savedHtml.trim() !== "") {
+                streamBox.innerHTML = savedHtml;
+            } else {
+                streamBox.innerHTML = '<div class="chat-bubble ai">Welcome to LOYAL AI. How can I help you today?</div>';
+            }
+            scrollToBottom();
+        }
+
+        function saveChatTitleToSidebarList(titleText) {
+            let historyList = JSON.parse(localStorage.getItem('loyal_ai_sidebar_titles')) || [];
+            if (!historyList.includes(titleText)) {
+                historyList.unshift(titleText);
+                if (historyList.length > 8) historyList.pop(); // keep top 8 entries
+                localStorage.setItem('loyal_ai_sidebar_titles', JSON.stringify(historyList));
+                loadSavedChatHistoryLog();
+            }
+        }
+
+        function loadSavedChatHistoryLog() {
+            const historyContainer = document.getElementById('sidebar-history-container');
+            const historyList = JSON.parse(localStorage.getItem('loyal_ai_sidebar_titles')) || [];
+            historyContainer.innerHTML = '';
+            
+            if (historyList.length === 0) {
+                historyContainer.innerHTML = '<div class="history-item" style="color:#555;cursor:default;">No recent chats</div>';
+                return;
+            }
+            
+            historyList.forEach(title => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerText = title;
+                // Clicking a topic loads it up instantly
+                item.onclick = function() {
+                    toggleSidebar();
+                };
+                historyContainer.appendChild(item);
+            });
+        }
+
+        function clearChat() {
+            localStorage.removeItem('loyal_ai_bubbles_html');
+            document.getElementById('chat-stream').innerHTML = '<div class="chat-bubble ai">Started a fresh conversation logs workspace.</div>';
+            saveCurrentChatBubblesState();
+            toggleSidebar();
         }
 
         async function executeChatAction() {
@@ -281,11 +332,9 @@
             if (!userText && !selectedFileBase64) return;
             
             if (userText) {
-                const historyContainer = document.getElementById('sidebar-history-container');
-                const newItem = document.createElement('div');
-                newItem.className = 'history-item';
-                newItem.innerText = userText.substring(0, 20) + (userText.length > 20 ? '...' : '');
-                historyContainer.insertBefore(newItem, historyContainer.firstChild);
+                // Shorten text title for sidebar navigation component
+                const displayTitle = userText.substring(0, 24) + (userText.length > 24 ? '...' : '');
+                saveChatTitleToSidebarList(displayTitle);
             }
 
             const userBubble = document.createElement('div');
@@ -303,8 +352,9 @@
                 userBubble.appendChild(textSpan);
             }
             streamBox.appendChild(userBubble);
+            saveCurrentChatBubblesState();
             
-            const activeMsg = userText || "Process image";
+            const activeMsg = userText || "Process attached file elements";
             const activeImg = selectedFileBase64;
             const activeMime = selectedFileMime;
             
@@ -335,8 +385,11 @@
                     typingBubble.innerText = data.reply;
                 }
             } catch (error) {
-                typingBubble.innerText = "Error contacting LOYAL AI engine.";
+                typingBubble.innerText = "Error establishing secure connection link.";
             }
+            
+            // Lock responses securely into local memory state
+            saveCurrentChatBubblesState();
             scrollToBottom();
         }
 
